@@ -1,7 +1,7 @@
 # testdpqfun function returns a vector of TRUE when the d,p,q functions exist
-# and behave like in R (e.g. d,p,qexp()), otherwise a list of messages. 
+# and behave like in R (e.g. d,p,qexp()), otherwise a list of messages.
 
-# INPUTS 
+# INPUTS
 #distr : the distribution name
 #fun: a character vector with letters among d, p, q
 #start.arg: an initial value list
@@ -10,22 +10,22 @@
 
 # OUTPUTS
 # a vector of logical TRUE or a vector of text messages
-testdpqfun <- function(distr, fun=c("d","p","q"), start.arg, 
+testdpqfun <- function(distr, fun=c("d","p","q"), start.arg,
                        fix.arg=NULL, discrete=FALSE)
 {
   stopifnot(all(is.character(fun)))
   fun <- fun[fun %in% c("d","p","q")]
   stopifnot(length(fun) > 0)
-  
-  if(is.vector(start.arg)) 
+
+  if(is.vector(start.arg))
     start.arg <- as.list(start.arg)
   if(is.function(fix.arg))
     stop("fix.arg should be either a named list or NULL but not a function")
-  
+
   op <- options() #get current options
   #print(getOption("warn"))
   options(warn=-1)
-  
+
   res <- NULL
   if("d" %in% fun)
     res <- rbind(res, test1fun(paste0("d", distr), start.arg, fix.arg))
@@ -33,10 +33,10 @@ testdpqfun <- function(distr, fun=c("d","p","q"), start.arg,
     res <- rbind(res, test1fun(paste0("p", distr), start.arg, fix.arg))
   if("q" %in% fun)
     res <- rbind(res, test1fun(paste0("q", distr), start.arg, fix.arg))
-  
+
   options(op)     # reset (all) initial options
   res
-} 
+}
 
 test1fun <- function(fn, start.arg, fix.arg, dpqr)
 {
@@ -44,26 +44,26 @@ test1fun <- function(fn, start.arg, fix.arg, dpqr)
   stopifnot(is.list(start.arg))
   if(!is.null(fix.arg))
     stopifnot(is.list(fix.arg))
-  
+
   #does the function exist?
-  if(!exists(fn, mode="function"))
+  if(!exists(fn, mode="function", envir=parent.frame()))
   {
     res$txt <- paste("The", fn, "function must be defined")
     return(res)
   }
-  
+
   #naming convention
   if(missing(dpqr))
     dpqr <- substr(fn, 1, 1)
   firstarg_theo <- switch(dpqr, "d"="x", "p"="q", "q"="p", "r"="n")
   firstarg_found <- names(formals(fn))[1]
   if(firstarg_found != firstarg_theo)
-  {    
+  {
     t0 <- paste("The", fn, "function should have its first argument named:", firstarg_theo)
     res$txt <- paste(t0, "as in base R")
     return(res)
   }
-  
+
   #zero-component vector
   res0 <- try(do.call(fn, c(list(numeric(0)), start.arg, fix.arg)), silent=TRUE)
   t0 <- paste("The", fn, "function should return a zero-length vector when input has length zero and not raise an error")
@@ -78,7 +78,7 @@ test1fun <- function(fn, start.arg, fix.arg, dpqr)
     res$txt <- t1
     return(res)
   }
-  
+
   #inconsistent value
   x <- c(0, 1, Inf, NaN, -1)
   res1 <- try(do.call(fn, c(list(x), start.arg, fix.arg)), silent=TRUE)
@@ -88,8 +88,8 @@ test1fun <- function(fn, start.arg, fix.arg, dpqr)
     res$txt <- t2
     return(res)
   }
-  
-  #missing value 
+
+  #missing value
   x <- c(0, 1, NA)
   res2 <- try(do.call(fn, c(list(x), start.arg, fix.arg)), silent=TRUE)
   t4 <- paste("The", fn, "function should return a vector of with NA values when input has missing values and not raise an error")
@@ -104,7 +104,7 @@ test1fun <- function(fn, start.arg, fix.arg, dpqr)
     res$txt <- t5
     return(res)
   }
-  
+
   #inconsistent parameter
   x <- 0:1
   start.arg <- lapply(start.arg, function(x) -x)
@@ -115,7 +115,7 @@ test1fun <- function(fn, start.arg, fix.arg, dpqr)
     res$txt <- t6
     return(res)
   }
-  
+
   #wrong parameter name
   x <- 0:1
   names(start.arg) <- paste0(names(start.arg), "_")
@@ -125,6 +125,6 @@ test1fun <- function(fn, start.arg, fix.arg, dpqr)
   {
     res$txt <- t8
     return(res)
-  }  
+  }
   return(data.frame(ok=TRUE, txt=""))
 }
